@@ -99,4 +99,4 @@ const handleUserLogin = async (rawuserData) => {
     return { EM: "Something went wrong", EC: -1 };
   }
 };
-module.exports = { registerNewUser, handleUserLogin };
+module.exports = { registerNewUser, handleUserLogin, hashPassword, checkEmail };

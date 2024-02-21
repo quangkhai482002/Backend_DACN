@@ -1,9 +1,19 @@
 import db from "../models/index";
+import { checkEmail, hashPassword } from "./loginRegisterService";
 
 const getAllUser = async () => {
   try {
     let users = await db.User.findAll({
-      attributes: ["id", "email", "username", "password"],
+      attributes: [
+        "id",
+        "email",
+        "username",
+        "password",
+        "phone",
+        "address",
+        "sex",
+        "groupID",
+      ],
       include: [
         {
           model: db.Group,
@@ -11,6 +21,8 @@ const getAllUser = async () => {
           //   nest: true,
         },
       ],
+      // order by name Z-A
+      order: [["id", "DESC"]],
     });
     if (users) {
       //   let data = users.get({ plain: true });
@@ -36,45 +48,58 @@ const getAllUser = async () => {
   }
 };
 
-const getUserWithPagination = async (page, limit) => {
-  try {
-    let offset = (page - 1) * limit;
-    const { count, rows } = await db.User.findAndCountAll({
-      attributes: ["id", "email", "username"],
-      include: [
-        {
-          model: db.Group,
-          attributes: ["name", "description"],
-          //   nest: true,
-        },
-      ],
-      offset: offset,
-      limit: limit,
-    });
+// const getUserWithPagination = async (page, limit) => {
+//   try {
+//     let offset = (page - 1) * limit;
+//     const { count, rows } = await db.User.findAndCountAll({
+//       attributes: ["id", "email", "username"],
+//       include: [
+//         {
+//           model: db.Group,
+//           attributes: ["name", "description"],
+//           //   nest: true,
+//         },
+//       ],
+//       offset: offset,
+//       limit: limit,
+//     });
 
-    let data = {
-      totalRows: count,
-      totalPages: Math.ceil(count / limit),
-      users: rows,
-    };
-    return {
-      EC: 0,
-      EM: "OK",
-      DT: data,
-    };
-  } catch (error) {
-    console.log(error);
-    return {
-      EC: 1,
-      EM: "Some thing went wrong",
-      DT: "",
-    };
-  }
-};
+//     let data = {
+//       totalRows: count,
+//       totalPages: Math.ceil(count / limit),
+//       users: rows,
+//     };
+//     return {
+//       EC: 0,
+//       EM: "OK",
+//       DT: data,
+//     };
+//   } catch (error) {
+//     console.log(error);
+//     return {
+//       EC: 1,
+//       EM: "Some thing went wrong",
+//       DT: "",
+//     };
+//   }
+// };
 
 const createNewUser = async (data) => {
   try {
-    await db.User.create(data);
+    // check email exist
+    let isEmailExist = await checkEmail(data.email);
+    if (isEmailExist === true) {
+      return {
+        EM: "Email is already exist",
+        EC: 1,
+        DT: [],
+      };
+    }
+
+    //hash password
+    let hashPass = hashPassword(data.password);
+
+    await db.User.create({ ...data, password: hashPass });
     return {
       EC: 0,
       EM: "Create new user successfully",
@@ -87,6 +112,13 @@ const createNewUser = async (data) => {
 
 const updateUser = async (data) => {
   try {
+    if (!data.groupID) {
+      return {
+        EC: 1,
+        EM: "GroupID not empty",
+        DT: "groupID not empty",
+      };
+    }
     let user = await db.User.findOne({
       where: {
         id: data.id,
@@ -94,13 +126,35 @@ const updateUser = async (data) => {
     });
     if (user) {
       // update
-      //   await
-      user.save({});
+      await user.update({
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        address: data.address,
+        groupID: data.groupID,
+        sex: data.sex,
+      });
+      return {
+        EC: 0,
+        EM: "Update user successfully",
+        DT: "",
+      };
     } else {
       //not found
+      return {
+        EC: 0,
+        EM: "user not exist",
+        DT: "",
+      };
     }
   } catch (error) {
     console.log(error);
+    return {
+      EC: 1,
+      EM: "Some thing went wrong",
+      DT: [],
+    };
   }
 };
 
@@ -140,5 +194,5 @@ module.exports = {
   createNewUser,
   updateUser,
   deleteUser,
-  getUserWithPagination,
+  // getUserWithPagination,
 };
