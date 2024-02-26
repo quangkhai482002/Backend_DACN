@@ -1,10 +1,4 @@
 import loginRegisterService from "../service/loginRegisterService";
-const testAPI = (req, res) => {
-  return res.status(200).json({
-    message: "ok",
-    data: "test api",
-  });
-};
 
 const handleRegister = async (req, res) => {
   try {
@@ -39,12 +33,18 @@ const handleRegister = async (req, res) => {
       DT: "", // DT: data
     });
   }
-  console.log("req.body:", req.body);
 };
 
 const handleLogin = async (req, res) => {
   try {
     let data = await loginRegisterService.handleUserLogin(req.body);
+    //set cookie
+    if (data && data.DT && data.DT.access_token) {
+      res.cookie("jwt", data.DT.access_token, {
+        httpOnly: true,
+        maxAge: 3600000, // 30s
+      });
+    }
 
     return res.status(200).json({
       EM: data.EM,
@@ -61,7 +61,6 @@ const handleLogin = async (req, res) => {
   }
 };
 module.exports = {
-  testAPI,
   handleRegister,
   handleLogin,
 };

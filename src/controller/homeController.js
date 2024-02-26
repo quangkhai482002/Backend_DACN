@@ -6,6 +6,12 @@ const handleHelloWorld = (req, res) => {
 };
 
 const handleUserPage = async (req, res) => {
+  // Cookies that have not been signed
+  // console.log("Cookies: ", req.cookies);
+
+  // // Cookies that have been signed
+  // console.log("Signed Cookies: ", req.signedCookies);
+
   //model -> get data from db
   let userList = await userSevice.getUserList();
   // console.log("check userList: ", userList);

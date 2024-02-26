@@ -32,7 +32,7 @@ const initWebRoutes = (app) => {
 
   // restful api
   // get, post, put, patch, delete
-  router.get("/api/test-api", apiController.testAPI);
+  // router.get("/api/test-api", apiController.testAPI);
 
   return app.use("/", router);
 };

@@ -97,7 +97,7 @@ const getUserList = async () => {
       raw: true,
       nest: true, // dùng để lấy dữ liệu của các bảng liên kết thành 1 object
     });
-    console.log("check newUser:", newUser);
+    // console.log("check newUser:", newUser);
 
     // let roles = await db.Group.findAll({
     //   where: {
