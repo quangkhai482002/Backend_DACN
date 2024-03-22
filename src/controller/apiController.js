@@ -60,7 +60,26 @@ const handleLogin = async (req, res) => {
     });
   }
 };
+
+const handleLogout = async (req, res) => {
+  try {
+    res.clearCookie("jwt");
+    return res.status(200).json({
+      EM: "clear cookie success!",
+      EC: 0,
+      DT: "",
+    });
+  } catch (error) {
+    console.log("error:", error);
+    return res.status(500).json({
+      EM: "error from server", // EM: error message
+      EC: "-1", // EC: error code
+      DT: "", // DT: data
+    });
+  }
+};
 module.exports = {
   handleRegister,
   handleLogin,
+  handleLogout,
 };

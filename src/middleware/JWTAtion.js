@@ -1,12 +1,12 @@
 require("dotenv").config();
 import jwt from "jsonwebtoken";
 
-const nonScurePaths = ["/", "/login", "/register"];
+const nonScurePaths = ["/", "/login", "/register", "/logout"];
 const createJWT = (payload) => {
   let key = process.env.JWT_SECRET;
   let token = null;
   try {
-    token = jwt.sign(payload, key);
+    token = jwt.sign(payload, key, { expiresIn: process.env.JWT_EXPIRES_IN });
   } catch (error) {
     console.log("error: ", error);
   }
@@ -24,16 +24,30 @@ const verifyJWT = (token) => {
   return decoded;
 };
 
+const extractToken = (req) => {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.split(" ")[0] === "Bearer"
+  ) {
+    return req.headers.authorization.split(" ")[1];
+  } else if (req.query && req.query.token) {
+    return req.query.token;
+  }
+  return null;
+};
+
 const checkUserJWT = (req, res, next) => {
   if (nonScurePaths.includes(req.path)) {
     return next();
   }
   let cookies = req.cookies;
-  if (cookies && cookies.jwt) {
-    let token = cookies.jwt;
+  let tokenFromHeader = extractToken(req);
+  if ((cookies && cookies.jwt) || tokenFromHeader) {
+    let token = cookies && cookies.jwt ? cookies.jwt : tokenFromHeader;
     let decoded = verifyJWT(token);
     if (decoded) {
       req.user = decoded;
+      req.token = token;
       next();
     } else {
       return res.status(401).json({
@@ -51,7 +65,7 @@ const checkUserJWT = (req, res, next) => {
   }
 };
 const checkUserPermission = (req, res, next) => {
-  if (nonScurePaths.includes(req.path)) {
+  if (nonScurePaths.includes(req.path) || req.path === "/account") {
     return next();
   }
   if (req.user) {
@@ -65,7 +79,9 @@ const checkUserPermission = (req, res, next) => {
         DT: "",
       });
     }
-    let canAceess = role.some((item) => item.url === currentUrl);
+    let canAceess = role.some(
+      (item) => item.url === currentUrl || currentUrl.includes(item.url)
+    );
     if (canAceess === true) {
       next();
     } else {
